@@ -5,7 +5,6 @@ contract land {
     address public originator;
 	uint public propertyid;
 	enum Status { NotFound, PendingForApproval, ApprovedForTransactions, ApplicationRejected }
-	uint[] public uniqueids;
 
 	struct landDetails {
         uint id;   //propertyid
@@ -21,17 +20,18 @@ contract land {
     // Initializing the User Contract.
 	constructor() public  {
 		originator = msg.sender;
-		users[originator] = 2;
+		users[originator] = 3;
 		verifiedUsers[originator] = true;
 	}
 
 	mapping(uint => landDetails) public properties;
 	mapping(uint => address) public propertiesUnderTxn;
+	mapping(uint => bool) public propertyAdded;
 
     mapping(address => int) public users;   //maps users to level of authority 
     mapping(address => bool) public verifiedUsers;
 
-	function addNewUser(address _newUser) public verifyAuthority returns (bool) {
+	function addNewUser(address _newUser) public returns (bool) {
 	    require(users[_newUser] == 0);
 	    require(verifiedUsers[_newUser] == false);
 	    users[_newUser] = 1;
@@ -39,10 +39,11 @@ contract land {
 	}
 
 
-	function addAuthority(address _newAuthority) public verifyAuthority returns (bool) {
+	function addAuthority(address _newAuthority) public verifyHeads returns (bool) {
 	    require(users[_newAuthority] == 0);
 	    require(verifiedUsers[_newAuthority] == false);
 	    users[_newAuthority] = 2;
+		verifiedUsers[_newAuthority] = true;
 	    return true;
 	}
 
@@ -69,18 +70,30 @@ contract land {
 
 
 	modifier verifyAuthority() {
-	    require(users[msg.sender] == 2 && verifiedUsers[msg.sender]);
+	    require(users[msg.sender] >=2 && verifiedUsers[msg.sender]);
+	    _;
+	}
+
+	modifier verifyHeads() {
+	    require(users[msg.sender] == 3 && verifiedUsers[msg.sender]);
+	    _;
+	}
+	
+	modifier propertyExists(uint _survey){
+	    require(propertyAdded[_survey] != true);
 	    _;
 	}
 
 
 
 	// Create a new Property.
-	function createProperty(uint _value,address _currOwner,uint _size,string memory _state, string memory _district, uint _surveyNumber) public verifyAuthority verifyUser(_currOwner) returns (bool) {
+	function createProperty(uint _value,address _currOwner,uint _size,string memory _state, string memory _district, uint _surveyNumber) public verifyUser(_currOwner) propertyExists(_surveyNumber) returns (bool) {
 		propertyid++;
 		properties[propertyid] = landDetails(propertyid, Status.PendingForApproval, _value, _currOwner, _size, _state ,_district, _surveyNumber);
+		propertyAdded[_surveyNumber] = true;
 		return true;
 	}
+
 
 	// Approve the new Property.
 	function approveProperty(uint _ID) public verifyAuthority returns (bool){
