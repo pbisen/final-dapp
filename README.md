@@ -1,3 +1,6 @@
+## Report
+The project report is available on https://drive.google.com/file/d/1Liiz7kk9ae4gvGCy6KDlxXV8IJzLAAGm/view?usp=sharing 
+
 # Setting Up
 1. The entire project can be run from the terminal.
 		Install Dependencies: ganache-cli, truffle, ethereum, lite-server.
